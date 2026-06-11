@@ -13,21 +13,25 @@ export enum JobStatus {
 export type JobCreatedResponse = {
   message: string;
   status: string;
+  code?: string;
 };
 
 export type JobStatusResponse = {
   message: string;
   status: string;
+  code?: string;
 };
 
 export type DownloadResponse = {
   message: string;
   status: string;
+  code?: string;
 };
 
 export type ErrorResponse = {
   message: string;
   status: string;
+  code?: string;
 };
 
 export type PutObjectBody = NonNullable<PutObjectCommandInput["Body"]>;
@@ -43,7 +47,14 @@ export type StorageConfig = {
 };
 
 export type StorageAdapter = {
-  putObject: (key: string, body: PutObjectBody, contentType: string) => Promise<void>;
+  putObject: (
+    key: string,
+    body: PutObjectBody,
+    contentType: string,
+  ) => Promise<void>;
   getObject: (key: string) => Promise<GetObjectBody>;
-  getPresignedDownloadUrl: (key: string, expiresSeconds?: number) => Promise<string>;
+  getPresignedDownloadUrl: (
+    key: string,
+    expiresSeconds?: number,
+  ) => Promise<string>;
 };
