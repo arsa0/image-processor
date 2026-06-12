@@ -58,3 +58,7 @@ export type StorageAdapter = {
     expiresSeconds?: number,
   ) => Promise<string>;
 };
+
+export type ImageJobPayload = {
+  jobId: string;
+};
