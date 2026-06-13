@@ -1,7 +1,4 @@
-import type {
-  GetObjectCommandOutput,
-  PutObjectCommandInput,
-} from "@aws-sdk/client-s3";
+import type { GetObjectCommandOutput, PutObjectCommandInput } from "@aws-sdk/client-s3";
 
 export enum JobStatus {
   PENDING = "pending",
@@ -11,14 +8,16 @@ export enum JobStatus {
 }
 
 export type JobCreatedResponse = {
+  job_id: string;
   message: string;
-  status: string;
+  status: JobStatus;
   code?: string;
 };
 
 export type JobStatusResponse = {
+  job_id: string;
   message: string;
-  status: string;
+  status: JobStatus;
   code?: string;
 };
 
@@ -47,16 +46,9 @@ export type StorageConfig = {
 };
 
 export type StorageAdapter = {
-  putObject: (
-    key: string,
-    body: PutObjectBody,
-    contentType: string,
-  ) => Promise<void>;
+  putObject: (key: string, body: PutObjectBody, contentType: string) => Promise<void>;
   getObject: (key: string) => Promise<GetObjectBody>;
-  getPresignedDownloadUrl: (
-    key: string,
-    expiresSeconds?: number,
-  ) => Promise<string>;
+  getPresignedDownloadUrl: (key: string, expiresSeconds?: number) => Promise<string>;
 };
 
 export type ImageJobPayload = {
