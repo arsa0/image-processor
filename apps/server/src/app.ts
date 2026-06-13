@@ -5,6 +5,8 @@ import type { ErrorResponse } from "@shared/processor";
 
 import { readServerEnv } from "./env.js";
 
+import { jobsRoute } from "./routes/jobs.js";
+
 export function createApp() {
   const { isDev } = readServerEnv();
   const app = new Hono();
@@ -15,11 +17,13 @@ export function createApp() {
       cors({
         origin: ["http://localhost:5173", "http://localhost:3000"],
         allowMethods: ["GET", "POST", "OPTIONS"],
-      }),
+      })
     );
   }
 
   app.get("/health", (c) => c.json({ status: "ok" }, 200));
+
+  app.route("/api/jobs", jobsRoute);
 
   app.onError((err, c) => {
     if (err instanceof HTTPException) {
