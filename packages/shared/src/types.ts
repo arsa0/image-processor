@@ -9,14 +9,14 @@ export enum JobStatus {
 
 export type JobCreatedResponse = {
   job_id: string;
-  message: string;
+  message?: string;
   status: JobStatus;
   code?: string;
 };
 
 export type JobStatusResponse = {
   job_id: string;
-  message: string;
+  message?: string;
   status: JobStatus;
   code?: string;
 };
