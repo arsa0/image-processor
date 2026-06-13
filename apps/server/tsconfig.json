@@ -4,6 +4,6 @@
     "noEmit": true,
     "types": ["bun"]
   },
-  "include": ["src/**/*", "scripts/enqueue-smoke.ts"],
+  "include": ["src/**/*", "test/**/*", "scripts/enqueue-smoke.ts"],
   "exclude": ["node_modules"]
 }
