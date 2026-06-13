@@ -9,7 +9,7 @@
     "verify:queue": "bun run --env-file=../../.env scripts/enqueue-smoke.ts",
     "build": "tsc --noEmit -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "bun test"
+    "test": "bun --env-file=../../.env test"
   },
   "dependencies": {
     "@db/processor": "workspace:*",
