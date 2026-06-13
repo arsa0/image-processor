@@ -9,8 +9,6 @@ export function createApp() {
   const { isDev } = readServerEnv();
   const app = new Hono();
 
-  // Dev-only CORS: prod serves the web app through nginx, which proxies
-  // /api to this server same-origin, so no CORS headers are needed there.
   if (isDev) {
     app.use(
       "*",
@@ -23,7 +21,6 @@ export function createApp() {
 
   app.get("/health", (c) => c.json({ status: "ok" }, 200));
 
-  // Centralized error handler -> always returns ErrorResponse shape.
   app.onError((err, c) => {
     if (err instanceof HTTPException) {
       const body: ErrorResponse = {
@@ -43,7 +40,6 @@ export function createApp() {
     return c.json(body, 500);
   });
 
-  // Unknown route -> ErrorResponse 404 (consistent client contract).
   app.notFound((c) => {
     const body: ErrorResponse = {
       message: "Not Found",
