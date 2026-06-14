@@ -1,16 +1,67 @@
 import { Worker, type Job } from "bullmq";
 import { Redis } from "ioredis";
-import { IMAGE_PROCESSING_QUEUE_NAME, type ImageJobPayload } from "@shared/processor";
+import {
+  IMAGE_PROCESSING_QUEUE_NAME,
+  getObjectBodyAsBytes,
+  type ImageJobPayload,
+} from "@shared/processor";
+import { prisma, JobStatus } from "@db/processor";
 
 import { readWorkerEnv } from "./env.js";
 import { logger } from "./logger.js";
+import { getStorage } from "./storage.js";
+import { processImage } from "./pipeline.js";
 
 function createConnection(redisUrl: string): Redis {
   return new Redis(redisUrl, { maxRetriesPerRequest: null });
 }
 
 async function processImageJob(job: Job<ImageJobPayload>): Promise<void> {
-  logger.info("Received job", { jobId: job.data.jobId, attempt: job.attemptsMade + 1 });
+  const { jobId } = job.data;
+  logger.info("Received job", { jobId, attempt: job.attemptsMade + 1 });
+
+  const record = await prisma.job.findUnique({
+    where: { id: jobId },
+    select: { originalKey: true },
+  });
+
+  if (!record) {
+    throw new Error(`Job '${jobId}' not found in database.`);
+  }
+
+  await prisma.job.update({
+    where: { id: jobId },
+    data: { status: JobStatus.PROCESSING },
+  });
+
+  const body = await getStorage().getObject(record.originalKey);
+  const input = await getObjectBodyAsBytes(body);
+
+  const output = await processImage(input);
+
+  const processedKey = `processed/${jobId}.webp`;
+  await getStorage().putObject(processedKey, output.data, "image/webp");
+
+  await prisma.job.update({
+    where: { id: jobId },
+    data: {
+      status: JobStatus.COMPLETED,
+      processedKey,
+      width: output.width,
+      height: output.height,
+      originalSize: input.length,
+      processedSize: output.size,
+    },
+  });
+
+  logger.info("Job processed", {
+    jobId,
+    processedKey,
+    width: output.width,
+    height: output.height,
+    originalSize: input.length,
+    processedSize: output.size,
+  });
 }
 
 export function createImageWorker(): Worker<ImageJobPayload> {
