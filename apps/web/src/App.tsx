@@ -155,6 +155,37 @@ export function App() {
                 : job.status}
             </strong>
           </p>
+          {status.data?.status === JobStatus.COMPLETED && (
+            <div data-testid="download-area">
+              {download ? (
+                <a href={download.downloadUrl} data-testid="download-link" download>
+                  Download processed image
+                </a>
+              ) : downloadError ? (
+                <p role="alert" data-testid="download-error" style={{ color: "crimson" }}>
+                  {downloadError}
+                </p>
+              ) : (
+                <p>Preparing download…</p>
+              )}
+            </div>
+          )}
+
+          {/* Failed: informative error from API */}
+          {status.data?.status === JobStatus.FAILED && (
+            <p role="alert" data-testid="job-failed" style={{ color: "crimson" }}>
+              {status.data.errorMessage ?? "Processing failed. Please try a different image."}
+            </p>
+          )}
+
+          {/* Timeout: still running after the safety cap */}
+          {status.phase === "timeout" && (
+            <p role="status" data-testid="job-timeout">
+              This is taking longer than expected. The job may still finish — check back shortly.
+            </p>
+          )}
+
+          {/* Transport-level polling error (network/HTTP) */}
           {status.phase === "error" && (
             <p role="alert" data-testid="status-error" style={{ color: "crimson" }}>
               {status.message}
