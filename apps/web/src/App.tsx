@@ -21,6 +21,7 @@ export function App() {
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const status = useJobStatus(job?.job_id ?? null);
+  const statusData = "data" in status ? status.data : null;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -38,7 +39,7 @@ export function App() {
 
   useEffect(() => {
     const jobId = job?.job_id;
-    const completed = status.data?.status === JobStatus.COMPLETED;
+    const completed = statusData?.status === JobStatus.COMPLETED;
     if (!jobId || !completed) return;
 
     const controller = new AbortController();
@@ -56,7 +57,7 @@ export function App() {
       });
 
     return () => controller.abort();
-  }, [job?.job_id, status.data?.status]);
+  }, [job?.job_id, statusData?.status]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -151,11 +152,11 @@ export function App() {
             Status:{" "}
             <strong data-testid="job-status">
               {status.phase === "done" || status.phase === "polling" || status.phase === "timeout"
-                ? (status.data?.status ?? job.status)
+                ? (statusData?.status ?? job.status)
                 : job.status}
             </strong>
           </p>
-          {status.data?.status === JobStatus.COMPLETED && (
+          {statusData?.status === JobStatus.COMPLETED && (
             <div data-testid="download-area">
               {download ? (
                 <a href={download.downloadUrl} data-testid="download-link" download>
@@ -172,9 +173,9 @@ export function App() {
           )}
 
           {/* Failed: informative error from API */}
-          {status.data?.status === JobStatus.FAILED && (
+          {statusData?.status === JobStatus.FAILED && (
             <p role="alert" data-testid="job-failed" style={{ color: "crimson" }}>
-              {status.data.errorMessage ?? "Processing failed. Please try a different image."}
+              {statusData?.errorMessage ?? "Processing failed. Please try a different image."}
             </p>
           )}
 
