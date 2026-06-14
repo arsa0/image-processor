@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { JobCreatedResponse } from "@shared/processor";
 import { ALLOWED_MIME_TYPE } from "@shared/processor";
+
 import { validateFile } from "./upload.js";
 import { uploadJob } from "./api.js";
+import { useJobStatus } from "./useJobStatus.js";
 
 const API_BASE = import.meta.env.PUBLIC_API_URL ?? "";
 
@@ -16,6 +18,7 @@ export function App() {
   const [submitting, setSubmitting] = useState(false);
   const [job, setJob] = useState<JobCreatedResponse | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const status = useJobStatus(job?.job_id ?? null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -117,8 +120,18 @@ export function App() {
             Job ID: <code data-testid="job-id">{job.job_id}</code>
           </p>
           <p>
-            Status: <strong data-testid="job-status">{job.status}</strong>
+            Status:{" "}
+            <strong data-testid="job-status">
+              {status.phase === "done" || status.phase === "polling" || status.phase === "timeout"
+                ? (status.data?.status ?? job.status)
+                : job.status}
+            </strong>
           </p>
+          {status.phase === "error" && (
+            <p role="alert" data-testid="status-error" style={{ color: "crimson" }}>
+              {status.message}
+            </p>
+          )}
         </section>
       )}
     </main>
