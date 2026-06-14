@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import type { JobCreatedResponse } from "@shared/processor";
-import { ALLOWED_MIME_TYPE } from "@shared/processor";
+import type { JobCreatedResponse, DownloadResponse } from "@shared/processor";
+import { ALLOWED_MIME_TYPE, JobStatus } from "@shared/processor";
 
 import { validateFile } from "./upload.js";
-import { uploadJob } from "./api.js";
+import { uploadJob, getJobDownload } from "./api.js";
 import { useJobStatus } from "./useJobStatus.js";
 
 const API_BASE = import.meta.env.PUBLIC_API_URL ?? "";
@@ -17,6 +17,8 @@ export function App() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [job, setJob] = useState<JobCreatedResponse | null>(null);
+  const [download, setDownload] = useState<DownloadResponse | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const status = useJobStatus(job?.job_id ?? null);
 
@@ -34,7 +36,28 @@ export function App() {
     return () => controller.abort();
   }, []);
 
-  // Abort any in-flight upload on unmount.
+  useEffect(() => {
+    const jobId = job?.job_id;
+    const completed = status.data?.status === JobStatus.COMPLETED;
+    if (!jobId || !completed) return;
+
+    const controller = new AbortController();
+    setDownload(null);
+    setDownloadError(null);
+
+    getJobDownload(jobId, controller.signal)
+      .then((res) => {
+        if (!controller.signal.aborted) setDownload(res);
+      })
+      .catch((err) => {
+        if (!controller.signal.aborted) {
+          setDownloadError(err instanceof Error ? err.message : "Could not get download link.");
+        }
+      });
+
+    return () => controller.abort();
+  }, [job?.job_id, status.data?.status]);
+
   useEffect(() => () => abortRef.current?.abort(), []);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>): void {
@@ -57,6 +80,9 @@ export function App() {
 
     setClientError(null);
     setFile(selected);
+
+    setDownload(null);
+    setDownloadError(null);
   }
 
   async function handleSubmit(e: React.FormEvent): Promise<void> {
@@ -79,6 +105,8 @@ export function App() {
       }
     } finally {
       setSubmitting(false);
+      setDownload(null);
+      setDownloadError(null);
     }
   }
 
