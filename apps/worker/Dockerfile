@@ -41,6 +41,7 @@ COPY --from=builder /app/packages/shared/dist  packages/shared/dist
 COPY --from=builder /app/packages/db/dist      packages/db/dist
 
 COPY apps/worker/src      apps/worker/src
+COPY apps/worker/scripts  apps/worker/scripts
 COPY apps/worker/tsconfig.json apps/worker/tsconfig.json
 COPY packages/db/prisma   packages/db/prisma
 
