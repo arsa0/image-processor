@@ -36,7 +36,6 @@ export function enqueueImageJob(payload: ImageJobPayload) {
   });
 }
 
-// Used by tests/scripts and graceful shutdown to release connections.
 export async function closeQueue(): Promise<void> {
   if (queue) {
     await queue.close();

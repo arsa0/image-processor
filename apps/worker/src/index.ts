@@ -5,8 +5,15 @@ const worker = createImageWorker();
 
 async function shutdown(signal: string): Promise<void> {
   logger.info("Shutting down worker", { signal });
-  await worker.close();
-  process.exit(0);
+  try {
+    await worker.close();
+  } catch (error) {
+    logger.error("Error during worker shutdown", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  } finally {
+    process.exit(0);
+  }
 }
 
 process.on("SIGINT", () => void shutdown("SIGINT"));
