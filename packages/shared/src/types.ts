@@ -8,14 +8,16 @@ export enum JobStatus {
 }
 
 export type JobCreatedResponse = {
-  message: string;
-  status: string;
+  job_id: string;
+  message?: string;
+  status: JobStatus;
   code?: string;
 };
 
 export type JobStatusResponse = {
-  message: string;
-  status: string;
+  job_id: string;
+  message?: string;
+  status: JobStatus;
   code?: string;
 };
 
