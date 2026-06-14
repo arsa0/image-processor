@@ -17,6 +17,17 @@ async function makeImage(width: number, height: number): Promise<Uint8Array> {
   return new Uint8Array(buf);
 }
 
+async function makeNoisyImage(width: number, height: number): Promise<Uint8Array> {
+  const pixels = Buffer.alloc(width * height * 3);
+  for (let i = 0; i < pixels.length; i++) {
+    pixels[i] = Math.floor(Math.random() * 256);
+  }
+  const buf = await sharp(pixels, { raw: { width, height, channels: 3 } })
+    .png()
+    .toBuffer();
+  return new Uint8Array(buf);
+}
+
 describe("processImage", () => {
   it("outputs a valid WebP", async () => {
     const out = await processImage(await makeImage(2000, 1500));
@@ -35,6 +46,12 @@ describe("processImage", () => {
     const out = await processImage(await makeImage(300, 200));
     expect(out.width).toBe(300);
     expect(out.height).toBe(200);
+  });
+
+  it("produces output smaller than the input", async () => {
+    const input = await makeNoisyImage(2000, 1500);
+    const out = await processImage(input);
+    expect(out.size).toBeLessThan(input.byteLength);
   });
 
   it("reports a positive processed size", async () => {
