@@ -48,3 +48,7 @@ export type StorageAdapter = {
   getObject: (key: string) => Promise<GetObjectBody>;
   getPresignedDownloadUrl: (key: string, expiresSeconds?: number) => Promise<string>;
 };
+
+export type ImageJobPayload = {
+  jobId: string;
+};
