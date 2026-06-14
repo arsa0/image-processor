@@ -1,0 +1,31 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+enum JobStatus {
+    PENDING    @map("pending")
+    PROCESSING @map("processing")
+    COMPLETED  @map("completed")
+    FAILED     @map("failed")
+}
+
+model Job {
+    id            String    @id @default(cuid())
+    status        JobStatus @default(PENDING)
+    originalKey   String
+    processedKey  String?
+    errorMessage  String?
+    originalSize  Int?
+    processedSize Int?
+    width         Int?
+    height        Int?
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+
+    @@index([status])
+    @@index([createdAt])
+}
