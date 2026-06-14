@@ -26,6 +26,7 @@ jobsRoute.get("/:id", async (c) => {
       processedSize: true,
       width: true,
       height: true,
+      errorMessage: true,
     },
   });
 
@@ -40,6 +41,7 @@ jobsRoute.get("/:id", async (c) => {
     processedSize: job.processedSize ?? undefined,
     width: job.width ?? undefined,
     height: job.height ?? undefined,
+    errorMessage: job.errorMessage ?? undefined,
   };
 
   return c.json(body, 200);

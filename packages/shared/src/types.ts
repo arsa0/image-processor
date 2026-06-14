@@ -23,6 +23,7 @@ export type JobStatusResponse = {
   processedSize?: number;
   width?: number;
   height?: number;
+  errorMessage?: string;
 };
 
 export type DownloadResponse = {
