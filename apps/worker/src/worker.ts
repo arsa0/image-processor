@@ -71,6 +71,8 @@ export function createImageWorker(): Worker<ImageJobPayload> {
   const worker = new Worker<ImageJobPayload>(IMAGE_PROCESSING_QUEUE_NAME, processImageJob, {
     connection: createConnection(redisUrl),
     concurrency,
+    stalledInterval: 30_000,
+    maxStalledCount: 1,
   });
 
   worker.on("ready", () => {
