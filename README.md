@@ -37,22 +37,55 @@ Wipe data volumes too: `docker compose down -v`
 
 ## Environment variables
 
-These are wired automatically inside Docker Compose. If running services manually outside Docker:
+Docker Compose now reads variables from your shell env and `.env` file (if present), with fallback defaults in `docker-compose.yml`.
+
+If you want to customize settings, copy `.env.example` to `.env` and edit values.
+
+### App/runtime variables
+
+These are consumed by the API/worker code.
 
 | Variable | Purpose |
 |----------|---------|
+| `NODE_ENV` | Runtime mode (`production` by default in compose) |
 | `DATABASE_URL` | Postgres connection string |
 | `REDIS_URL` | Redis connection for the job queue |
-| `S3_ENDPOINT` | Storage endpoint (MinIO locally, S3/GCS in the cloud) |
+| `S3_ENDPOINT` | Storage endpoint (MinIO locally, S3/GCS in cloud) |
+| `S3_PUBLIC_ENDPOINT` | Public endpoint used in returned download URLs |
 | `S3_REGION` | Bucket region |
 | `S3_BUCKET` | Bucket name |
 | `S3_ACCESS_KEY_ID` | Storage access key |
 | `S3_SECRET_ACCESS_KEY` | Storage secret |
-| `S3_FORCE_PATH_STYLE` | Set `true` for MinIO (path-style URLs) |
-| `PORT` | API server port (default `3000`) |
-| `MAX_UPLOAD_BYTES` | Upload size cap (default `20971520` = 20 MB) |
-| `PUBLIC_API_URL` | Base URL the server uses for self-references |
+| `S3_FORCE_PATH_STYLE` | `true` for MinIO (path-style URLs) |
+| `PORT` | API server port inside server container env |
+| `MAX_UPLOAD_BYTES` | Upload size cap (`20971520` = 20 MB) |
+| `PUBLIC_API_URL` | Base URL used by server/web integration |
 | `WORKER_CONCURRENCY` | Parallel jobs the worker processes at once |
+
+### Docker Compose wiring variables
+
+These are used by Docker Compose itself for host port mappings, bootstrap credentials, and optional container naming.
+
+| Variable | Purpose |
+|----------|---------|
+| `WEB_PORT` | Host port mapped to web nginx container (`:80`) |
+| `POSTGRES_DB` | Initial Postgres database name |
+| `POSTGRES_USER` | Initial Postgres user |
+| `POSTGRES_PASSWORD` | Initial Postgres password |
+| `POSTGRES_PORT` | Host port mapped to Postgres container (`:5432`) |
+| `REDIS_PORT` | Host port mapped to Redis container (`:6379`) |
+| `MINIO_ROOT_USER` | MinIO root user |
+| `MINIO_ROOT_PASSWORD` | MinIO root password |
+| `MINIO_PORT` | Host port mapped to MinIO API (`:9000`) |
+| `MINIO_CONSOLE_PORT` | Host port mapped to MinIO console (`:9001`) |
+| `POSTGRES_CONTAINER_NAME` | Optional Postgres container name override |
+| `REDIS_CONTAINER_NAME` | Optional Redis container name override |
+| `MINIO_CONTAINER_NAME` | Optional MinIO container name override |
+| `MINIO_INIT_CONTAINER_NAME` | Optional MinIO init container name override |
+| `MIGRATE_CONTAINER_NAME` | Optional migration container name override |
+| `SERVER_CONTAINER_NAME` | Optional API server container name override |
+| `WORKER_CONTAINER_NAME` | Optional worker container name override |
+| `WEB_CONTAINER_NAME` | Optional web container name override |
 
 ---
 
@@ -116,9 +149,3 @@ All three apps plus the shared `db` and `shared` packages live in one repo. **Bu
 ### TypeScript strict everywhere
 
 `strict: true` in the shared base config catches type errors at compile time across every package. Important when the same job/status contracts flow through three separate services.
-
----
-
-## Optional: cloud deployment (GCS + GCP VM)
-
-Because the storage layer speaks the S3 API, you can swap MinIO for **Google Cloud Storage** by enabling GCS's S3-compatible interoperability endpoint and updating the storage env vars — no application code changes. Run the server and worker on a **GCP VM** (or any cloud VM), point `DATABASE_URL` at Cloud SQL, `REDIS_URL` at Memorystore, and the rest of the compose setup transfers directly.
