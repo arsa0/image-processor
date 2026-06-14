@@ -1,7 +1,4 @@
-import type {
-  GetObjectCommandOutput,
-  PutObjectCommandInput,
-} from "@aws-sdk/client-s3";
+import type { GetObjectCommandOutput, PutObjectCommandInput } from "@aws-sdk/client-s3";
 
 export enum JobStatus {
   PENDING = "pending",
@@ -13,21 +10,25 @@ export enum JobStatus {
 export type JobCreatedResponse = {
   message: string;
   status: string;
+  code?: string;
 };
 
 export type JobStatusResponse = {
   message: string;
   status: string;
+  code?: string;
 };
 
 export type DownloadResponse = {
   message: string;
   status: string;
+  code?: string;
 };
 
 export type ErrorResponse = {
   message: string;
   status: string;
+  code?: string;
 };
 
 export type PutObjectBody = NonNullable<PutObjectCommandInput["Body"]>;
