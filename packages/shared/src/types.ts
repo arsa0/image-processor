@@ -42,6 +42,7 @@ export type GetObjectBody = NonNullable<GetObjectCommandOutput["Body"]>;
 
 export type StorageConfig = {
   endpoint: string;
+  publicEndpoint?: string;
   region: string;
   bucket: string;
   accessKeyId: string;
