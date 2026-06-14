@@ -9,16 +9,20 @@ export enum JobStatus {
 
 export type JobCreatedResponse = {
   job_id: string;
-  message?: string;
   status: JobStatus;
-  code?: string;
+  originalSize?: number;
+  processedSize?: number;
+  width?: number;
+  height?: number;
 };
 
 export type JobStatusResponse = {
   job_id: string;
-  message?: string;
   status: JobStatus;
-  code?: string;
+  originalSize?: number;
+  processedSize?: number;
+  width?: number;
+  height?: number;
 };
 
 export type DownloadResponse = {

@@ -3,12 +3,52 @@ import { describe, expect, it, mock, beforeEach } from "bun:test";
 const putObject = mock(async () => {});
 const create = mock(async (args: { data: { id: string } }) => args.data);
 const enqueueImageJob = mock(async () => ({ id: "x" }));
+const findUnique = mock(async (_args: unknown): Promise<Record<string, unknown> | null> => null);
 
+mock.module("@db/processor", () => ({
+  prisma: { job: { create, findUnique } },
+  toSharedStatus: (s: string) => s.toLowerCase(),
+}));
 mock.module("../src/storage.js", () => ({ getStorage: () => ({ putObject }) }));
-mock.module("@db/processor", () => ({ prisma: { job: { create } } }));
 mock.module("../src/queue.js", () => ({ enqueueImageJob }));
 
 const { createApp } = await import("../src/app.ts");
+
+describe("GET /api/jobs/:id", () => {
+  beforeEach(() => {
+    findUnique.mockClear();
+  });
+
+  it("returns 200 with status + metadata for a known id", async () => {
+    findUnique.mockResolvedValueOnce({
+      id: "job-123",
+      status: "COMPLETED",
+      originalSize: 2048,
+      processedSize: 512,
+      width: 1280,
+      height: 720,
+    });
+
+    const res = await createApp().request("/api/jobs/job-123");
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.job_id).toBe("job-123");
+    expect(body.status).toBe("completed"); // mapped to shared lowercase
+    expect(body.processedSize).toBe(512);
+    expect(body.width).toBe(1280);
+  });
+
+  it("returns 404 for an unknown id", async () => {
+    findUnique.mockResolvedValueOnce(null);
+
+    const res = await createApp().request("/api/jobs/does-not-exist");
+
+    expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body.status).toBe("error");
+  });
+});
 
 describe("POST /api/jobs", () => {
   beforeEach(() => {

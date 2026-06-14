@@ -1,13 +1,43 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { JobStatus, type JobCreatedResponse } from "@shared/processor";
-import { prisma } from "@db/processor";
+import { JobStatus, type JobCreatedResponse, type JobStatusResponse } from "@shared/processor";
+import { prisma, toSharedStatus } from "@db/processor";
 
 import { enqueueImageJob } from "../queue.js";
 import { getStorage } from "../storage.js";
 import { validateImageUpload } from "../upload.js";
-
 export const jobsRoute = new Hono();
+
+jobsRoute.get("/:id", async (c) => {
+  const id = c.req.param("id");
+
+  const job = await prisma.job.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      status: true,
+      originalSize: true,
+      processedSize: true,
+      width: true,
+      height: true,
+    },
+  });
+
+  if (!job) {
+    throw new HTTPException(404, { message: `Job '${id}' not found.` });
+  }
+
+  const body: JobStatusResponse = {
+    job_id: job.id,
+    status: toSharedStatus(job.status),
+    originalSize: job.originalSize ?? undefined,
+    processedSize: job.processedSize ?? undefined,
+    width: job.width ?? undefined,
+    height: job.height ?? undefined,
+  };
+
+  return c.json(body, 200);
+});
 
 jobsRoute.post("/", async (c) => {
   const form = await c.req.formData();
