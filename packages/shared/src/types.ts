@@ -1,3 +1,8 @@
+import type {
+  GetObjectCommandOutput,
+  PutObjectCommandInput,
+} from "@aws-sdk/client-s3";
+
 export enum JobStatus {
   PENDING = "pending",
   PROCESSING = "processing",
@@ -23,4 +28,22 @@ export type DownloadResponse = {
 export type ErrorResponse = {
   message: string;
   status: string;
+};
+
+export type PutObjectBody = NonNullable<PutObjectCommandInput["Body"]>;
+export type GetObjectBody = NonNullable<GetObjectCommandOutput["Body"]>;
+
+export type StorageConfig = {
+  endpoint: string;
+  region: string;
+  bucket: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  forcePathStyle: boolean;
+};
+
+export type StorageAdapter = {
+  putObject: (key: string, body: PutObjectBody, contentType: string) => Promise<void>;
+  getObject: (key: string) => Promise<GetObjectBody>;
+  getPresignedDownloadUrl: (key: string, expiresSeconds?: number) => Promise<string>;
 };
