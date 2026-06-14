@@ -63,6 +63,16 @@ function normalizeEndpoint(endpoint: string): string {
   return endpoint.replace(/\/+$/, "");
 }
 
+function parseOptionalEndpoint(value: string | undefined): string | undefined {
+  const normalized = value?.trim();
+
+  if (!normalized) {
+    return undefined;
+  }
+
+  return normalizeEndpoint(normalized);
+}
+
 function ensureValidExpiresSeconds(expiresSeconds: number): number {
   if (!Number.isInteger(expiresSeconds)) {
     throw new Error("expiresSeconds must be an integer number of seconds.");
@@ -80,9 +90,9 @@ function ensureValidExpiresSeconds(expiresSeconds: number): number {
   return expiresSeconds;
 }
 
-function createS3ClientConfig(config: StorageConfig): S3ClientConfig {
+function createS3ClientConfig(config: StorageConfig, endpoint: string): S3ClientConfig {
   return {
-    endpoint: config.endpoint,
+    endpoint,
     region: config.region,
     forcePathStyle: config.forcePathStyle,
     credentials: {
@@ -97,8 +107,11 @@ function getDefaultEnv(): EnvMap {
 }
 
 export function createStorageConfigFromEnv(env: EnvMap = getDefaultEnv()): StorageConfig {
+  const publicEndpoint = parseOptionalEndpoint(env.S3_PUBLIC_ENDPOINT);
+
   return {
     endpoint: normalizeEndpoint(getRequiredEnv(env, "S3_ENDPOINT")),
+    ...(publicEndpoint ? { publicEndpoint } : {}),
     region: getRequiredEnv(env, "S3_REGION"),
     bucket: getRequiredEnv(env, "S3_BUCKET"),
     accessKeyId: getRequiredEnv(env, "S3_ACCESS_KEY_ID"),
@@ -108,7 +121,10 @@ export function createStorageConfigFromEnv(env: EnvMap = getDefaultEnv()): Stora
 }
 
 export function createStorageAdapter(config: StorageConfig): StorageAdapter {
-  const s3 = new S3Client(createS3ClientConfig(config));
+  const s3 = new S3Client(createS3ClientConfig(config, config.endpoint));
+  const presignS3 = new S3Client(
+    createS3ClientConfig(config, config.publicEndpoint ?? config.endpoint),
+  );
 
   return {
     async putObject(key: string, body: PutObjectBody, contentType: string) {
@@ -162,7 +178,7 @@ export function createStorageAdapter(config: StorageConfig): StorageAdapter {
       const validatedExpiresSeconds = ensureValidExpiresSeconds(expiresSeconds);
 
       return getSignedUrl(
-        s3,
+        presignS3,
         new GetObjectCommand({
           Bucket: config.bucket,
           Key: key,
