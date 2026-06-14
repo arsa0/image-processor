@@ -26,9 +26,8 @@ export type JobStatusResponse = {
 };
 
 export type DownloadResponse = {
-  message: string;
-  status: string;
-  code?: string;
+  downloadUrl: string;
+  expiresAt: string;
 };
 
 export type ErrorResponse = {

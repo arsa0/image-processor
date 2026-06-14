@@ -1,6 +1,12 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { JobStatus, type JobCreatedResponse, type JobStatusResponse } from "@shared/processor";
+import {
+  JobStatus,
+  S3_PRESIGNED_DOWNLOAD_URL_DEFAULT_EXPIRES_SECONDS,
+  type JobCreatedResponse,
+  type JobStatusResponse,
+  type DownloadResponse,
+} from "@shared/processor";
 import { prisma, toSharedStatus } from "@db/processor";
 
 import { enqueueImageJob } from "../queue.js";
@@ -70,4 +76,39 @@ jobsRoute.post("/", async (c) => {
 
   const body: JobCreatedResponse = { job_id: jobId, status: JobStatus.PENDING };
   return c.json(body, 202);
+});
+
+jobsRoute.get("/:id/download", async (c) => {
+  const id = c.req.param("id");
+
+  const job = await prisma.job.findUnique({
+    where: { id },
+    select: { id: true, status: true, processedKey: true },
+  });
+
+  if (!job) {
+    throw new HTTPException(404, { message: `Job '${id}' not found.` });
+  }
+
+  const status = toSharedStatus(job.status);
+
+  if (status !== JobStatus.COMPLETED) {
+    throw new HTTPException(409, {
+      message: `Job '${id}' is not ready for download (status: ${status}).`,
+    });
+  }
+
+  if (!job.processedKey) {
+    throw new HTTPException(409, {
+      message: `Job '${id}' is completed but has no processed output.`,
+    });
+  }
+
+  const expiresSeconds = S3_PRESIGNED_DOWNLOAD_URL_DEFAULT_EXPIRES_SECONDS;
+  const downloadUrl = await getStorage().getPresignedDownloadUrl(job.processedKey, expiresSeconds);
+
+  const expiresAt = new Date(Date.now() + expiresSeconds * 1000).toISOString();
+
+  const body: DownloadResponse = { downloadUrl, expiresAt };
+  return c.json(body, 200);
 });
