@@ -1,0 +1,25 @@
+{
+  "name": "@db/processor",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": "./dist/index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "prisma:generate": "prisma generate --config prisma/prisma.config.ts",
+    "prisma:migrate:dev": "prisma migrate dev --config prisma/prisma.config.ts",
+    "prisma:migrate:deploy": "prisma migrate deploy --config prisma/prisma.config.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.8.0",
+    "@shared/processor": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.3",
+    "dotenv": "^17.4.2",
+    "prisma": "^7.8.0",
+    "typescript": "^6.0.3"
+  }
+}
