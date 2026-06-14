@@ -1,0 +1,11 @@
+# .dockerignore
+node_modules
+**/node_modules
+dist
+**/dist
+.turbo
+.git
+.env
+*.env
+uploads
+**/*.log
